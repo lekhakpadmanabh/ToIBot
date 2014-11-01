@@ -1,3 +1,8 @@
+################
+# Author: Pad
+# License: GPLv3
+################
+
 import praw
 from selenium import webdriver
 import sys
@@ -66,9 +71,8 @@ if __name__ == '__main__':
         if 'epaper' in p.domain:
             continue
         if check_record(p.id):
-            #print p.id, "exists!"
             continue
-        #print p.id, p.title, p.url
+        #print p.id, p.title
         screengrab(p.url)
         link = imgur_up()
         if link is None:
