@@ -1,0 +1,7 @@
+*.pyc
+*.png
+*.log
+*.db
+*.ipynb
+secrets.py
+prawenv/
