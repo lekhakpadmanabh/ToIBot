@@ -3,5 +3,7 @@
 *.log
 *.db
 *.ipynb
+*.crx
+*.xpi
 secrets.py
 prawenv/

@@ -24,8 +24,7 @@ COMMENT =\
 **Summary**: {summary}\n
 **Full Text**\n
 {fulltext}\n
-* [Send Message to owner](http://www.reddit.com/message/compose/?to=padmanabh) | [Github](https://github.com/lekhakpadmanabh/ToIBot) *
-
+*[Message Owner](http://www.reddit.com/message/compose/?to=padmanabh) | [Code](https://github.com/lekhakpadmanabh/ToIBot)*
 """
 
 #Database connection + cursor initialization
@@ -39,12 +38,20 @@ cursor.execute('''
 red = praw.Reddit(USERAGENT)
 red.login(username=USERNAME, password=PASSWORD)
 client = ImgurClient(IMGUR_CID, IMGUR_KEY)
-br = webdriver.PhantomJS()
+
 g = Goose()
 
 def screengrab(url):
-    br.get(url)
-    br.save_screenshot("ToIBot.png")
+    vdisplay = Xvfb()
+    vdisplay.start()
+    fp = webdriver.FirefoxProfile()
+    fp.add_extension('adblockplusfirefox.xpi')
+    fp.set_preference("extensions.adblockplus.currentVersion", "2.4")
+    fox = webdriver.Firefox(fp)
+    fox.get(url)
+    fox.save_screenshot('ToIBot.png')
+    fox.quit()
+    vdisplay.stop()
 
 def imgur_up():
     try:
