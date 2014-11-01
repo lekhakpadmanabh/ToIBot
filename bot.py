@@ -3,10 +3,11 @@
 # License: GPLv3
 ################
 
+from goose import Goose
+from imgurpython import ImgurClient
 import praw
 from selenium import webdriver
 import sys
-from imgurpython import ImgurClient
 import sqlite3 as lite
 from time import sleep 
 from secrets import (
@@ -19,8 +20,12 @@ from secrets import (
 USERAGENT ="ToI Bot v1 /u/ToIBot"
 COMMENT =\
 """
-[Mirror]({imgur})\n
-For issues/removal: [send my creator a message](http://www.reddit.com/message/compose/?to=padmanabh)
+[Full Mirror]({imgur})\n
+**Summary**: {summary}\n
+**Full Text**\n
+{fulltext}\n
+* [Send Message to owner](http://www.reddit.com/message/compose/?to=padmanabh) | [Github](https://github.com/lekhakpadmanabh/ToIBot) *
+
 """
 
 #Database connection + cursor initialization
@@ -31,11 +36,11 @@ cursor.execute('''
                        imgur_url TEXT)
 ''')
 
-
-#api connections
 red = praw.Reddit(USERAGENT)
 red.login(username=USERNAME, password=PASSWORD)
 client = ImgurClient(IMGUR_CID, IMGUR_KEY)
+br = webdriver.PhantomJS()
+g = Goose()
 
 def screengrab(url):
     br.get(url)
@@ -60,6 +65,10 @@ def check_record(reddit_id):
     cursor.execute("SELECT reddit_id from botlog where reddit_id=?",(reddit_id,))
     return cursor.fetchone()
 
+def text_summary(url):
+    article = g.extract(url=url)
+    return article.meta_description, article.cleaned_text
+
 if __name__ == '__main__':
     subs = red.get_subreddit("india")
     posts = subs.get_new(limit=100)
@@ -75,9 +84,10 @@ if __name__ == '__main__':
         if link is None:
             continue
         nopost=True
+        summ,full= text_summary(p.url)
         while nopost:
             try:
-                p.add_comment( COMMENT.format(**{'imgur':link}))
+                p.add_comment( COMMENT.format(**{'imgur':link, 'summary':summ, 'fulltext':full}))
                 add_record(p.id,p.url,link)
                 nopost = False
             except praw.errors.RateLimitExceeded:
