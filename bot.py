@@ -5,15 +5,20 @@ from imgurpython import ImgurClient
 import sqlite3 as lite
 from time import sleep 
 from secrets import (
-IMGUR_CID,
-IMGUR_KEY,
-USERNAME,
-PASSWORD,
-)
+                    IMGUR_CID,
+                    IMGUR_KEY,
+                    USERNAME,
+                    PASSWORD,
+                    )
 
 USERAGENT ="ToI Bot v1 /u/ToIBot"
+COMMENT =\
+"""
+[Mirror]({imgur})\n
+For issues/removal: [send my creator a message](http://www.reddit.com/message/compose/?to=padmanabh)
+"""
 
-#db
+#Database connection + cursor initialization
 conn = lite.connect("bot.db")
 cursor = conn.cursor()
 cursor.execute('''
@@ -21,19 +26,11 @@ cursor.execute('''
                        imgur_url TEXT)
 ''')
 
-#initiating connections
+
+#api connections
 red = praw.Reddit(USERAGENT)
-br = webdriver.PhantomJS()
 red.login(username=USERNAME, password=PASSWORD)
 client = ImgurClient(IMGUR_CID, IMGUR_KEY)
-
-COMMENT =\
-"""
-[Mirror]({imgur})
-
-I am ToIBot. For issues/removal: [send my creator a message](http://www.reddit.com/message/compose/?to=padmanabh)
-"""
-
 
 def screengrab(url):
     print "Grabbing screenshot..."
@@ -64,19 +61,22 @@ if __name__ == '__main__':
     subs = red.get_subreddit("india")
     posts = subs.get_new(limit=100)
     for p in posts:
-        if 'timesofindia' in p.domain and 'epaper' not in p.domain:
-            if check_record(p.id):
-                print p.id, "exists!"
-                continue
-            print p.id, p.title, p.url
-            screengrab(p.url)
-            link = imgur_up()
-            if link is None:
-                continue
-            while True:
-                try:
-                    p.add_comment( COMMENT.format(**{'imgur':link}))
-                    add_record(p.id,p.url,link)
-                except praw.errors.RateLimitExceeded:
-                    print "Rate limit exceeded, sleeping 8 mins"
-                    sleep(8*60)
+        if 'timesofindia' not in p.domain:
+            continue
+        if 'epaper' in p.domain:
+            continue
+        if check_record(p.id):
+            #print p.id, "exists!"
+            continue
+        #print p.id, p.title, p.url
+        screengrab(p.url)
+        link = imgur_up()
+        if link is None:
+            continue
+        while True:
+            try:
+                p.add_comment( COMMENT.format(**{'imgur':link}))
+                add_record(p.id,p.url,link)
+            except praw.errors.RateLimitExceeded:
+                print "Rate limit exceeded, sleeping 8 mins"
+                sleep(8*60)
