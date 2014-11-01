@@ -38,12 +38,10 @@ red.login(username=USERNAME, password=PASSWORD)
 client = ImgurClient(IMGUR_CID, IMGUR_KEY)
 
 def screengrab(url):
-    print "Grabbing screenshot..."
     br.get(url)
     br.save_screenshot("ToIBot.png")
 
 def imgur_up():
-    print "Uploading..."
     try:
         res = client.upload_from_path("ToIBot.png")
         return res['link']
@@ -72,7 +70,6 @@ if __name__ == '__main__':
             continue
         if check_record(p.id):
             continue
-        #print p.id, p.title
         screengrab(p.url)
         link = imgur_up()
         if link is None:
