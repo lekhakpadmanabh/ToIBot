@@ -77,10 +77,12 @@ if __name__ == '__main__':
         link = imgur_up()
         if link is None:
             continue
-        while True:
+        nopost=True
+        while nopost:
             try:
                 p.add_comment( COMMENT.format(**{'imgur':link}))
                 add_record(p.id,p.url,link)
+                nopost = False
             except praw.errors.RateLimitExceeded:
                 print "Rate limit exceeded, sleeping 8 mins"
                 sleep(8*60)
