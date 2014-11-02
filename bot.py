@@ -112,25 +112,21 @@ if __name__ == '__main__':
 
         if check_record(p.id):
             """skip if record has been processed"""
-
             continue
 
         if 'timesofindia' not in p.domain:
             """usually timesofindia.indiatimes.com, sometimes
             m.timesofindiatimes.com, etc."""
-
             continue
 
         if 'epaper' in p.domain:
             """don't process epaper links"""
-
             continue
 
         if '[video]' in p.title.lower():
             """skip stories whose main attraction
             is a video, usually with a [video] in
             title"""
-
             continue
 
         screengrab_firefox(p.url)
