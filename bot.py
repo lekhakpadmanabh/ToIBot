@@ -25,23 +25,27 @@ u"""
 **Summary**: {summary}\n
 **Full Text**\n
 {fulltext}\n
-*[Report a Problem](http://www.reddit.com/message/compose/?to=padmanabh) | [Code](https://github.com/lekhakpadmanabh/ToIBot)*
+*[Report a Problem](http://www.reddit.com/message/compose/?to=padmanabh) | \
+[Code](https://github.com/lekhakpadmanabh/ToIBot)*
 """
-
 #Database connection + cursor initialization
 conn = lite.connect("bot.db")
 cursor = conn.cursor()
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS botlog(id INTEGER PRIMARY KEY, reddit_id TEXT unique, toi_url TEXT,
-                       imgur_url TEXT)
-''')
-
+cursor.execute('''CREATE TABLE IF NOT EXISTS botlog(id INTEGER PRIMARY KEY, 
+                  reddit_id TEXT unique, toi_url TEXT,
+                  imgur_url TEXT)
+               ''')
+#reddit api
 red = praw.Reddit(USERAGENT)
 red.login(username=USERNAME, password=PASSWORD)
+#imgur api
 client = ImgurClient(IMGUR_CID, IMGUR_KEY)
+#Goose
 g = Goose()
 
 def screengrab_firefox(url):
+    """Firefox with adblock"""
+
     vdisplay = Xvfb()
     vdisplay.start()
     fp = webdriver.FirefoxProfile()
@@ -54,6 +58,8 @@ def screengrab_firefox(url):
     vdisplay.stop()
 
 def screengrab_phantom(url):
+    """PhantomJS webdriver"""
+
     br = webdriver.PhantomJS()
     br.get(url)
     br.save_screenshot('ToIBot.png')
@@ -61,14 +67,20 @@ def screengrab_phantom(url):
 
 
 def imgur_up():
-    try:
-        res = client.upload_from_path("ToIBot.png")
-        return res['link']
-    except:
-        print "Error:", sys.exc_info()[0]
-        return None
+    """Upload to imgur"""
+
+    while True
+        try:
+            res = client.upload_from_path("ToIBot.png")
+            break
+        except:
+            print "Error:", sys.exc_info()[0]
+    return res['link']
+
 
 def add_record(reddit_id, toi_url, imgur_url):
+    """Insert id's and url into db"""
+
     try:
         cursor.execute("INSERT INTO botlog (reddit_id,toi_url,imgur_url) VALUES (?,?,?)", (reddit_id,toi_url,imgur_url));
         conn.commit()
@@ -76,36 +88,55 @@ def add_record(reddit_id, toi_url, imgur_url):
         print "Reddit id {} already exists".format(reddit_id)
 
 def check_record(reddit_id):
-    cursor.execute("SELECT reddit_id from botlog where reddit_id=?",(reddit_id,))
+    """check if given id has been processed previously"""
+
+    cursor.execute("SELECT reddit_id from botlog where reddit_id=?",
+                   (reddit_id,))
     return cursor.fetchone()
 
 def text_summary(url):
+    """Return summary and text of article"""
+
     article = g.extract(url=url)
     return article.meta_description, article.cleaned_text
 
 if __name__ == '__main__':
+
     subs = red.get_subreddit("india")
     posts = subs.get_new(limit=100)
     for p in posts:
         if 'timesofindia' not in p.domain:
+            """usually timesofindia.indiatimes.com, sometimes
+            m.timesofindiatimes.com, etc."""
+
             continue
+
         if 'epaper' in p.domain:
+            """don't process epaper links"""
+
             continue
         if '[video]' in p.title.lower():
+            """skip stories whose main attraction
+            is a video, usually with a [video] in
+            title"""
+
             continue
+
         if check_record(p.id):
+            """skip if record has been processed"""
+
             continue
+
         screengrab_firefox(p.url)
         link = imgur_up()
-        if link is None:
-            continue
-        summ,full= text_summary(p.url)
-        nopost=True
+        summ,full = text_summary(p.url)
+        nopost = True
+
         while nopost:
             try:
-                print p.title #,'\n', link, '\n', summ, '\n', full
-                p.add_comment( COMMENT.format(**{'imgur':link, 'summary':summ, 'fulltext':full}))
-                add_record(p.id,p.url,link)
+                print p.title
+                p.add_comment( COMMENT.format(**{'imgur':link, 'summary':summ, 'fulltext':full}) )
+                add_record(p.id, p.url, link)
                 nopost = False
             except praw.errors.RateLimitExceeded:
                 print "Rate limit exceeded, sleeping 8 mins"
