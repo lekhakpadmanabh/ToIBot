@@ -82,7 +82,8 @@ def add_record(reddit_id, toi_url, imgur_url):
     """Insert id's and url into db"""
 
     try:
-        cursor.execute("INSERT INTO botlog (reddit_id,toi_url,imgur_url) VALUES (?,?,?)", (reddit_id,toi_url,imgur_url));
+        cursor.execute("INSERT INTO botlog (reddit_id,toi_url,imgur_url) \
+                        VALUES (?,?,?)", (reddit_id,toi_url,imgur_url));
         conn.commit()
     except lite.IntegrityError:
         print "Reddit id {} already exists".format(reddit_id)
@@ -105,6 +106,12 @@ if __name__ == '__main__':
     subs = red.get_subreddit("india")
     posts = subs.get_new(limit=100)
     for p in posts:
+
+        if check_record(p.id):
+            """skip if record has been processed"""
+
+            continue
+
         if 'timesofindia' not in p.domain:
             """usually timesofindia.indiatimes.com, sometimes
             m.timesofindiatimes.com, etc."""
@@ -115,15 +122,11 @@ if __name__ == '__main__':
             """don't process epaper links"""
 
             continue
+
         if '[video]' in p.title.lower():
             """skip stories whose main attraction
             is a video, usually with a [video] in
             title"""
-
-            continue
-
-        if check_record(p.id):
-            """skip if record has been processed"""
 
             continue
 
@@ -135,7 +138,8 @@ if __name__ == '__main__':
         while nopost:
             try:
                 print p.title
-                p.add_comment( COMMENT.format(**{'imgur':link, 'summary':summ, 'fulltext':full}) )
+                p.add_comment( COMMENT.format(**{'imgur':link, 'summary':summ, 
+                                                 'fulltext':full}) )
                 add_record(p.id, p.url, link)
                 nopost = False
             except praw.errors.RateLimitExceeded:
