@@ -16,15 +16,16 @@ from secrets import (
                     USERNAME,
                     PASSWORD,
                     )
+from xvfbwrapper import Xvfb
 
 USERAGENT ="ToI Bot v1 /u/ToIBot"
 COMMENT =\
-"""
+u"""
 [Full Mirror]({imgur})\n
 **Summary**: {summary}\n
 **Full Text**\n
 {fulltext}\n
-*[Message Owner](http://www.reddit.com/message/compose/?to=padmanabh) | [Code](https://github.com/lekhakpadmanabh/ToIBot)*
+*[Report a Problem](http://www.reddit.com/message/compose/?to=padmanabh) | [Code](https://github.com/lekhakpadmanabh/ToIBot)*
 """
 
 #Database connection + cursor initialization
@@ -38,10 +39,9 @@ cursor.execute('''
 red = praw.Reddit(USERAGENT)
 red.login(username=USERNAME, password=PASSWORD)
 client = ImgurClient(IMGUR_CID, IMGUR_KEY)
-
 g = Goose()
 
-def screengrab(url):
+def screengrab_firefox(url):
     vdisplay = Xvfb()
     vdisplay.start()
     fp = webdriver.FirefoxProfile()
@@ -52,6 +52,13 @@ def screengrab(url):
     fox.save_screenshot('ToIBot.png')
     fox.quit()
     vdisplay.stop()
+
+def screengrab_phantom(url):
+    br = webdriver.PhantomJS()
+    br.get(url)
+    br.save_screenshot('ToIBot.png')
+    br.quit()
+
 
 def imgur_up():
     try:
@@ -84,16 +91,19 @@ if __name__ == '__main__':
             continue
         if 'epaper' in p.domain:
             continue
+        if '[video]' in p.title.lower():
+            continue
         if check_record(p.id):
             continue
-        screengrab(p.url)
+        screengrab_firefox(p.url)
         link = imgur_up()
         if link is None:
             continue
-        nopost=True
         summ,full= text_summary(p.url)
+        nopost=True
         while nopost:
             try:
+                print p.title #,'\n', link, '\n', summ, '\n', full
                 p.add_comment( COMMENT.format(**{'imgur':link, 'summary':summ, 'fulltext':full}))
                 add_record(p.id,p.url,link)
                 nopost = False
