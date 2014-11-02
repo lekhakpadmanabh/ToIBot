@@ -1,7 +1,9 @@
-################
-# Author: Pad
-# License: GPLv3
-################
+#######################
+##
+## Author: Padmanabh
+## License: GPLv3
+##
+#######################
 
 from goose import Goose
 from imgurpython import ImgurClient
@@ -44,7 +46,8 @@ client = ImgurClient(IMGUR_CID, IMGUR_KEY)
 g = Goose()
 
 def screengrab_firefox(url):
-    """Firefox with adblock"""
+    """get screenshot: firefox with adblock
+    and virtual display"""
 
     vdisplay = Xvfb()
     vdisplay.start()
@@ -58,7 +61,7 @@ def screengrab_firefox(url):
     vdisplay.stop()
 
 def screengrab_phantom(url):
-    """PhantomJS webdriver"""
+    """get screenshot: headless phantomJS"""
 
     br = webdriver.PhantomJS()
     br.get(url)
