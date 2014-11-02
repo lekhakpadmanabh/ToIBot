@@ -16,7 +16,8 @@ try:
     import configparser as cfg
 except ImportError:
     import ConfigParser as cfg
-#getting secrets
+
+#get configs
 conf = cfg.ConfigParser()
 conf.read("config.ini")
 USERNAME = conf.get('REDDIT','USERNAME')
@@ -24,8 +25,7 @@ PASSWORD = conf.get('REDDIT','PASSWORD')
 IMGUR_CID = conf.get('IMGUR','CLIENT_ID')
 IMGUR_KEY = conf.get('IMGUR','API_KEY')
 USERAGENT = conf.get('GENERAL','USERAGENT')
-SUBREDDIT = "padbots" #test
-
+SUBREDDIT = "india"
 #Database connection + cursor initialization
 conn = lite.connect("bot.db")
 cursor = conn.cursor()
@@ -100,7 +100,7 @@ u"""
 **Key Points**\n ---
 {keypoints}\n --- 
 [^Full ^Mirror]({imgur})\n
-^I'm ^a ^bot [^Message ^Creator](http://www.reddit.com/message/compose/?to=padmanabh) | \
+^I'm ^a ^bot [^Message ^Creator](http://www.reddit.com/message/compose/?to=padmanabh) ^| \
 [^Code](https://github.com/lekhakpadmanabh/ToIBot)
 """
 
