@@ -5,5 +5,7 @@
 *.ipynb
 *.crx
 *.xpi
+*.ini
+summarizer.py
 secrets.py
 prawenv/

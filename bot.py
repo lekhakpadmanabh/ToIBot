@@ -1,35 +1,31 @@
 #######################
-##
 ## Author: Padmanabh
 ## License: GPLv3
-##
 #######################
 
-from goose import Goose
 from imgurpython import ImgurClient
+from management import dnd_users
 import praw
 from selenium import webdriver
 import sys
 import sqlite3 as lite
 from time import sleep 
-from secrets import (
-                    IMGUR_CID,
-                    IMGUR_KEY,
-                    USERNAME,
-                    PASSWORD,
-                    )
 from xvfbwrapper import Xvfb
 
-USERAGENT ="ToI Bot v1 /u/ToIBot"
-COMMENT =\
-u"""
-[Full Mirror]({imgur})\n
-**Summary**: {summary}\n
-**Full Text**\n
-{fulltext}\n
-*[Report a Problem](http://www.reddit.com/message/compose/?to=padmanabh) | \
-[Code](https://github.com/lekhakpadmanabh/ToIBot)*
-"""
+try:
+    import configparser as cfg
+except ImportError:
+    import ConfigParser as cfg
+#getting secrets
+conf = cfg.ConfigParser()
+conf.read("config.ini")
+USERNAME = conf.get('REDDIT','USERNAME')
+PASSWORD = conf.get('REDDIT','PASSWORD')
+IMGUR_CID = conf.get('IMGUR','CLIENT_ID')
+IMGUR_KEY = conf.get('IMGUR','API_KEY')
+USERAGENT = conf.get('GENERAL','USERAGENT')
+SUBREDDIT = "padbots" #test
+
 #Database connection + cursor initialization
 conn = lite.connect("bot.db")
 cursor = conn.cursor()
@@ -42,8 +38,6 @@ red = praw.Reddit(USERAGENT)
 red.login(username=USERNAME, password=PASSWORD)
 #imgur api
 client = ImgurClient(IMGUR_CID, IMGUR_KEY)
-#Goose
-g = Goose()
 
 def screengrab_firefox(url):
     """get screenshot: firefox with adblock
@@ -72,17 +66,17 @@ def screengrab_phantom(url):
 def imgur_up():
     """Upload to imgur"""
 
-    while True
+    while True:
         try:
             res = client.upload_from_path("ToIBot.png")
-            break
+            return res['link']
         except:
-            print "Error:", sys.exc_info()[0]
-    return res['link']
+            print "Retrying upload:", sys.exc_info()[0]
+
 
 
 def add_record(reddit_id, toi_url, imgur_url):
-    """Insert id's and url into db"""
+    """Insert id and urls into db"""
 
     try:
         cursor.execute("INSERT INTO botlog (reddit_id,toi_url,imgur_url) \
@@ -98,17 +92,41 @@ def check_record(reddit_id):
                    (reddit_id,))
     return cursor.fetchone()
 
-def text_summary(url):
-    """Return summary and text of article"""
+#submission format 
+COMMENT =\
+u"""
 
-    article = g.extract(url=url)
-    return article.meta_description, article.cleaned_text
+**Summary**: {summary}\n
+**Key Points**\n ---
+{keypoints}\n --- 
+[^Full ^Mirror]({imgur})\n
+^I'm ^a ^bot [^Message ^Creator](http://www.reddit.com/message/compose/?to=padmanabh) | \
+[^Code](https://github.com/lekhakpadmanabh/ToIBot)
+"""
+
+#custom summarizer not yet open
+from summarizer import summarizer
+
+
+def format_keypoints(key_points):
+    assert len(key_points) == 4
+    return ">* {0}\n>* {1}\n>* {2}\n>* {3}\n".format(*[p[2] for p in key_points])
+
+def text_summary(url):
+    hsumm, kp = summarizer(url)
+    kpf = format_keypoints(kp)
+    return hsumm, kpf
 
 if __name__ == '__main__':
 
-    subs = red.get_subreddit("india")
+    subs = red.get_subreddit(SUBREDDIT)
     posts = subs.get_new(limit=100)
     for p in posts:
+
+        if p.author in dnd_users():
+            """filter out submissions by
+            users who've requested donotdisturb"""
+            continue
 
         if check_record(p.id):
             """skip if record has been processed"""
@@ -131,16 +149,17 @@ if __name__ == '__main__':
 
         screengrab_firefox(p.url)
         link = imgur_up()
-        summ,full = text_summary(p.url)
+        summ,kpts = text_summary(p.url)
         nopost = True
 
         while nopost:
             try:
                 print p.title
                 p.add_comment( COMMENT.format(**{'imgur':link, 'summary':summ, 
-                                                 'fulltext':full}) )
+                                                 'keypoints':kpts}) )
                 add_record(p.id, p.url, link)
                 nopost = False
             except praw.errors.RateLimitExceeded:
                 print "Rate limit exceeded, sleeping 8 mins"
                 sleep(8*60)
+
