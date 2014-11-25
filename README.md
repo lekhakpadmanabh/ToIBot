@@ -3,7 +3,7 @@ ToIBot
 
 No longer active, read update.
 
-It used to post screengrabs of the entire webpage, upload it to imgur and post that link to reddit.
+It used to post screengrabs of the entire webpage, upload it to imgur and post that link to reddit. Intention was to let a user judge if an article was linkbait before clicking on it.
 
 In the latest commits, the bot was doing what would later become the more generic [samacharbot](https://github.com/lekhakpadmanabh/KeyPointsBot). If you want to run a screengrabbing bot, just use one of the earlier commits. There are two screengrab options- via PhantomJS or via Firefox with AdblockPlus using xvfb.
 
